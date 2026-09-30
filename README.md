@@ -19,6 +19,20 @@ Pair-wise GSB 标注任务仓库（第 16 批 / 244）。
 ./mvnw -q verify
 ```
 
+## 组件说明
+
+`com.example.gsb.racedetector` 是一个基于向量时钟（vector clock）的数据竞争检测组件：
+
+- `RaceDetector` 登记内存访问与同步事件，`detectRaces()` 输出竞争集合与统计。
+- 同步事件（锁获取/释放、volatile 读/写、线程启动/结束）按经典 happens-before
+  语义更新向量时钟；锁与 volatile 变量各自持有 release 时钟。
+- 竞争判定：同一位置、不同线程、至少一次为写、且两条访问的向量时钟互不为
+  happens-before 时报告竞争。
+- `RaceReport` 包含位置、两条访问（线程、读写类型、序号、调用点）以及缺失的
+  同步类别（`LOCK` / `VOLATILE` / `THREAD_LIFECYCLE`）。
+- `RaceDetector.sampling(rate, seed)` 支持在真实并发批处理上按概率采样登记。
+- `RaceStatistics` 给出登记访问数、同步事件数、比对次数、被剪枝访问对数。
+
 ## 任务提示词
 
 以下为本题完整的 User Prompt 原文，两次执行必须使用完全相同的文本。
