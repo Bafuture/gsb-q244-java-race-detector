@@ -30,3 +30,13 @@ Pair-wise GSB 标注任务仓库（第 16 批 / 244）。
 1. 在本仓库中完成提示词要求的全部内容。
 2. `./mvnw -q verify` 必须通过。
 3. 完成后在所属分支（A 或 B）上提交，产物快照的父提交必须是初始环境快照。
+
+## 组件说明
+
+数据竞争检测组件位于 `com.example.gsb.race` 包，基于向量时钟（vector clock）追踪 happens-before 关系：
+
+- `RaceDetector`：核心检测器。`recordAccess(location, threadId, type[, callSite])` 登记读写访问；`onLockAcquire/onLockRelease`、`onVolatileWrite/onVolatileRead`、`onThreadStart/onThreadJoin` 登记同步事件；`getRaces()` 返回去重后的竞争集合；`statistics()` 返回登记访问数、同步事件数、比对次数与被剪枝的访问对。
+- `SamplingRaceDetector`：按位置每 N 次访问采样登记一次的包装封装，同步事件始终全量转发，可直接用于真实并发执行。
+- `Race`：竞争报告，包含位置、两条访问（线程、调用点、持锁集合）与缺失的同步类型（`LOCK` / `VOLATILE` / `THREAD_LIFECYCLE`）。
+
+判定规则：同一位置两次访问、至少一次为写、且向量时钟判定两者无 happens-before 关系时报告竞争；被 happens-before 排序的访问对会被剪枝，不产生假阳性。
